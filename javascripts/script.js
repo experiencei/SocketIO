@@ -190,3 +190,6 @@ function startGame() {
 // On Load
 startGame();
 
+socket.on('connect', () => {
+  console.log('Connected as...', socket.id);
+});
