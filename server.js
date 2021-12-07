@@ -21,5 +21,7 @@ io.on('connection', (socket) => {
     }
 });
 
-
+socket.on('paddleMove', (paddleData) => {
+    socket.broadcast.emit('paddleMove', paddleData);
+  });
 })
