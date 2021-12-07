@@ -2,6 +2,8 @@
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
 const socket = io('http://localhost:3000');
+let isReferee = false;
+
 let paddleIndex = 0;
 
 let width = 500;
@@ -192,4 +194,11 @@ startGame();
 
 socket.on('connect', () => {
   console.log('Connected as...', socket.id);
+});
+
+socket.on('startGame', (refereeId) => {
+  console.log('Referee is', refereeId);
+
+  isReferee = socket.id === refereeId;
+  startGame();
 });
