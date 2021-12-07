@@ -3,7 +3,6 @@ const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
 const socket = io('http://localhost:3000');
 let isReferee = false;
-
 let paddleIndex = 0;
 
 let width = 500;
@@ -91,6 +90,11 @@ function ballReset() {
   ballX = width / 2;
   ballY = height / 2;
   speedY = 3;
+  socket.emit('ballMove', {
+    ballX,
+    ballY,
+    score,
+  });
 }
 
 // Adjust Ball Movement
@@ -101,6 +105,11 @@ function ballMove() {
   if (playerMoved) {
     ballX += speedX;
   }
+  socket.emit('ballMove', {
+    ballX,
+    ballY,
+    score,
+  });
 }
 
 // Determine What Ball Bounces Off, Score Points, Reset Ball
@@ -148,32 +157,31 @@ function ballBoundaries() {
       trajectoryX[1] = ballX - (paddleX[1] + paddleDiff);
       speedX = trajectoryX[1] * 0.3;
     } else {
-      // Reset Ball, Increase Computer Difficulty, add to Player Score
       ballReset();
       score[0]++;
     }
   }
 }
 
-
-
 // Called Every Frame
 function animate() {
-  computerAI();
-  ballMove();
+  if (isReferee) {
+    ballMove();
+    ballBoundaries();
+  }
   renderCanvas();
-  ballBoundaries();
   window.requestAnimationFrame(animate);
 }
 
-// Start Game, Reset Everything
-function startGame() {
+// Load Game, Reset Everything
+function loadGame() {
   createCanvas();
   renderIntro();
   socket.emit('ready');
+}
 
-  
-  paddleIndex = 0;
+function startGame() {
+  paddleIndex = isReferee ? 0 : 1;
   window.requestAnimationFrame(animate);
   canvas.addEventListener('mousemove', (e) => {
     playerMoved = true;
@@ -184,13 +192,16 @@ function startGame() {
     if (paddleX[paddleIndex] > (width - paddleWidth)) {
       paddleX[paddleIndex] = width - paddleWidth;
     }
+    socket.emit('paddleMove', {
+      xPosition: paddleX[paddleIndex],
+    });
     // Hide Cursor
     canvas.style.cursor = 'none';
   });
 }
 
 // On Load
-startGame();
+loadGame();
 
 socket.on('connect', () => {
   console.log('Connected as...', socket.id);
